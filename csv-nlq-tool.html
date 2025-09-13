@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Natural Language Query Tool</title>
+    <!-- PapaParse library for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        /* CSS Custom Properties for theming support */
+        :root {
+            /* Light theme color variables */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f7fafc;
+            --bg-tertiary: #edf2f7;
+			--bg-accent: linear-gradient(to right, #2C5364, #203A43, #0F2027);
+            --bg-header: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            --bg-dark: #1a202c;
+            --text-primary: #2d3748;
+            --text-secondary: #4a5568;
+            --text-light: #718096;
+            --text-white: #ffffff;
+            --text-dark: #e2e8f0;
+            --border-light: #e2e8f0;
+            --border-medium: #cbd5e0;
+            --border-focus: #667eea;
+            /* Status message colors */
+            --success-bg: #f0fff4;
+            --success-text: #22543d;
+            --success-border: #9ae6b4;
+            --error-bg: #fed7d7;
+            --error-text: #742a2a;
+            --error-border: #feb2b2;
+            --info-bg: #ebf8ff;
+            --info-text: #2a4365;
+            --info-border: #90cdf4;
+            --shadow: rgba(0,0,0,0.1);
+            --hover-bg: #f7fafc;
+        }
+
+        /* Dark theme color overrides */
+        [data-theme="dark"] {
+            --bg-primary: #1a202c;
+            --bg-secondary: #2d3748;
+            --bg-tertiary: #4a5568;
+			--bg-accent: linear-gradient(to right, #2C5364, #203A43, #0F2027);
+            --bg-header: linear-gradient(135deg, #0d1117 0%, #1a202c 100%);
+            --bg-dark: #0d1117;
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --text-light: #718096;
+            --text-white: #ffffff;
+            --text-dark: #e2e8f0;
+            --border-light: #4a5568;
+            --border-medium: #2d3748;
+            --border-focus: #667eea;
+            --success-bg: #1a2e1a;
+            --success-text: #68d391;
+            --success-border: #22543d;
+            --error-bg: #2d1b1b;
+            --error-text: #fc8181;
+            --error-border: #742a2a;
+            --info-bg: #1a2332;
+            --info-text: #63b3ed;
+            --info-border: #2a4365;
+            --shadow: rgba(0,0,0,0.3);
+            --hover-bg: #2d3748;
+        }
+
+        /* Global reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-accent);
+            min-height: 100vh;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        /* Main container with card-like styling */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg-primary);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px var(--shadow);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        /* Header section with gradient background */
+        .header {
+            background: var(--bg-header);
+            color: var(--text-white);
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Theme toggle button positioned in header */
+        .theme-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            color: var(--text-white);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Main content area */
+        .content {
+            padding: 2rem;
+        }
+
+        /* Collapsible section styling */
+        .collapsible-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-light);
+            transition: all 0.3s ease;
+        }
+
+        /* Section header with click interaction */
+        .section-header {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--text-primary);
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        .section-header:hover {
+            background: var(--hover-bg);
+        }
+
+        /* Toggle arrow animation */
+        .section-toggle {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        /* Content area of collapsible sections */
+        .section-content {
+            padding: 0 1.5rem 1.5rem;
+            border-top: 1px solid var(--border-light);
+            transition: all 0.3s ease;
+        }
+
+        /* Collapsed state styles */
+        .section-content.collapsed {
+            display: none;
+        }
+
+        .section-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        /* Form styling */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        /* Focus state for form inputs */
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        /* File upload drop zone */
+        .file-upload {
+            border: 3px dashed var(--border-medium);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            background: var(--bg-tertiary);
+        }
+        
+        .file-upload:hover {
+            border-color: var(--border-focus);
+            background: var(--hover-bg);
+        }
+        
+        /* Drag and drop visual feedback */
+        .file-upload.dragover {
+            border-color: var(--border-focus);
+            background: var(--info-bg);
+        }
+        
+        /* Hidden file input */
+        .file-input {
+            display: none;
+        }
+        
+        /* Query input area layout */
+        .query-input {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .query-input input {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid var(--border-light);
+            border-radius: 12px;
+            font-size: 1.1rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        /* Query button with gradient background */
+        .query-button {
+            background: var(--bg-accent);
+            color: var(--text-white);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .query-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Disabled button state */
+        .query-button:disabled {
+            background: var(--border-medium);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Status message styling */
+        .status {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background: var(--success-bg);
+            color: var(--success-text);
+            border: 1px solid var(--success-border);
+        }
+        
+        .status.error {
+            background: var(--error-bg);
+            color: var(--error-text);
+            border: 1px solid var(--error-border);
+        }
+        
+        .status.info {
+            background: var(--info-bg);
+            color: var(--info-text);
+            border: 1px solid var(--info-border);
+        }
+        
+        /* Results section */
+        .results {
+            margin-top: 2rem;
+        }
+        
+        /* SQL query display with dark code styling */
+        .sql-display {
+            background: var(--bg-dark);
+            color: var(--text-dark);
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        
+        /* Data table container with horizontal scroll */
+        .data-table {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+        }
+        
+        .data-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        /* Table header styling */
+        .data-table th {
+            background: var(--bg-secondary);
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-light);
+            color: var(--text-primary);
+        }
+        
+        /* Table cell styling */
+        .data-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        /* Row hover effect */
+        .data-table tr:hover td {
+            background: var(--hover-bg);
+        }
+        
+        /* Schema display section */
+        .schema-display {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .schema-display h4 {
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        
+        .schema-display ul {
+            list-style-type: none;
+            padding-left: 1rem;
+        }
+        
+        .schema-display li {
+            padding: 0.25rem 0;
+            color: var(--text-secondary);
+        }
+
+        /* Example queries section */
+        .examples {
+            background: var(--success-bg);
+            border-left: 4px solid var(--success-border);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .examples h4 {
+            color: var(--success-text);
+            margin-bottom: 0.5rem;
+        }
+        
+        .examples ul {
+            margin-left: 1rem;
+        }
+        
+        .examples li {
+            margin: 0.25rem 0;
+            color: var(--success-text);
+        }
+
+        /* Two-column grid layout */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Responsive design for mobile devices */
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .query-input {
+                flex-direction: column;
+            }
+            
+            .theme-toggle {
+                position: static;
+                margin: 1rem auto 0;
+            }
+            
+            .header {
+                padding: 1.5rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Application header with title and theme toggle -->
+        <div class="header">
+            <div class="theme-toggle" id="themeToggle">
+                <span id="themeIcon">🌙</span>
+                <span id="themeText">Dark</span>
+            </div>
+            <h1>CSV Natural Language Query Tool</h1>
+            <p>Upload a CSV file and query it with natural language using AI</p>
+        </div>
+        
+        <div class="content">
+            <!-- API Configuration Section -->
+            <div class="collapsible-section">
+                <div class="section-header" data-section="config">
+                    <h3>🔧 API Configuration</h3>
+                    <span class="section-toggle">▼</span>
+                </div>
+                <div class="section-content" id="config-content">
+                    <div class="grid-2">
+                        <!-- API endpoint configuration -->
+                        <div class="form-group">
+                            <label for="apiUrl">API Endpoint URL:</label>
+                            <input type="url" id="apiUrl" value="https://api.openai.com/v1/chat/completions" 
+                                   placeholder="https://api.openai.com/v1/chat/completions">
+                        </div>
+                        <!-- API key input (password field for security) -->
+                        <div class="form-group">
+                            <label for="apiKey">API Key:</label>
+                            <input type="password" id="apiKey" placeholder="Your API key">
+                        </div>
+                    </div>
+                    <!-- Model selection dropdown -->
+                    <div class="form-group">
+                        <label for="model">Model:</label>
+                        <select id="model">
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            <option value="gpt-4">GPT-4</option>
+                            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                            <option value="llama-3.1-8b">Llama 3.1 8B (Local)</option>
+                            <option value="mixtral-8x7b">Mixtral 8x7B (Local)</option>
+                            <option value="custom">Custom Model</option>
+                        </select>
+                    </div>
+                    <!-- Custom model name input (hidden by default) -->
+                    <div class="form-group" id="customModelGroup" style="display: none;">
+                        <label for="customModel">Custom Model Name:</label>
+                        <input type="text" id="customModel" placeholder="model-name">
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Upload Section -->
+            <div class="collapsible-section">
+                <div class="section-header" data-section="upload">
+                    <h3>📁 File Upload</h3>
+                    <span class="section-toggle">▼</span>
+                </div>
+                <div class="section-content" id="upload-content">
+                    <!-- Drag and drop file upload area -->
+                    <div class="file-upload" id="fileUpload">
+                        <input type="file" id="fileInput" class="file-input" accept=".csv" />
+                        <div id="uploadText">
+                            <h3>📄 Upload CSV File</h3>
+                            <p>Drag and drop a CSV file here, or click to select</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status message display area -->
+            <div id="status"></div>
+
+            <!-- Data Schema Display Section (hidden until file is uploaded) -->
+            <div class="collapsible-section" id="schemaSection" style="display: none;">
+                <div class="section-header" data-section="schema">
+                    <h3>📊 Data Schema</h3>
+                    <span class="section-toggle">▼</span>
+                </div>
+                <div class="section-content" id="schema-content">
+                    <div id="schemaDisplay"></div>
+                </div>
+            </div>
+
+            <!-- Query Section (hidden until file is uploaded) -->
+            <div class="collapsible-section" id="querySection" style="display: none;">
+                <div class="section-header" data-section="query">
+                    <h3>🤖 Ask Questions</h3>
+                    <span class="section-toggle">▼</span>
+                </div>
+                <div class="section-content" id="query-content">
+                    <!-- Example queries to help users understand capabilities -->
+                    <div class="examples">
+                        <h4>💡 Example Questions:</h4>
+                        <ul>
+                            <li>"Show me the top 5 highest values"</li>
+                            <li>"What's the average price by category?"</li>
+                            <li>"Count how many records have status = 'active'"</li>
+                            <li>"Find all customers from California"</li>
+                            <li>"Show the total sales by month"</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Natural language query input -->
+                    <div class="query-input">
+                        <input type="text" id="queryInput" placeholder="Ask a question about your data..." />
+                        <button class="query-button" id="queryButton">Query</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results display area -->
+            <div id="results" class="results"></div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Main application class that handles CSV upload, processing, and natural language querying
+         */
+        class CSVQueryTool {
+            constructor() {
+                // Initialize application state
+                this.csvData = null;        // Stores parsed CSV data
+                this.schema = null;         // Stores data schema information
+                
+                // Set up event listeners and initialize components
+                this.initializeEventListeners();
+                this.initializeTheme();
+                this.loadSettings();
+                this.initializeCollapsibleSections();
+            }
+
+            /**
+             * Set up all event listeners for user interactions
+             */
+            initializeEventListeners() {
+                // Get DOM element references
+                const fileUpload = document.getElementById('fileUpload');
+                const fileInput = document.getElementById('fileInput');
+                const queryButton = document.getElementById('queryButton');
+                const queryInput = document.getElementById('queryInput');
+                const modelSelect = document.getElementById('model');
+                const customModelGroup = document.getElementById('customModelGroup');
+                const themeToggle = document.getElementById('themeToggle');
+
+                // File upload event handlers
+                fileUpload.addEventListener('click', () => fileInput.click());
+                fileUpload.addEventListener('dragover', this.handleDragOver.bind(this));
+                fileUpload.addEventListener('drop', this.handleDrop.bind(this));
+                fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+
+                // Query submission handlers
+                queryButton.addEventListener('click', this.handleQuery.bind(this));
+                queryInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleQuery();
+                });
+
+                // Model selection handler - show/hide custom model input
+                modelSelect.addEventListener('change', (e) => {
+                    customModelGroup.style.display = e.target.value === 'custom' ? 'block' : 'none';
+                    this.saveSettings();
+                });
+
+                // Theme toggle handler
+                themeToggle.addEventListener('click', this.toggleTheme.bind(this));
+
+                // Auto-save settings when inputs change
+                ['apiUrl', 'apiKey', 'model', 'customModel'].forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.addEventListener('input', this.saveSettings.bind(this));
+                    }
+                });
+            }
+
+            /**
+             * Initialize theme system from saved preferences
+             */
+            initializeTheme() {
+                const savedTheme = localStorage.getItem('csv-nlq-theme') || 'light';
+                this.setTheme(savedTheme);
+            }
+
+            /**
+             * Toggle between light and dark themes
+             */
+            toggleTheme() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                this.setTheme(newTheme);
+            }
+
+            /**
+             * Apply a specific theme and update UI elements
+             * @param {string} theme - 'light' or 'dark'
+             */
+            setTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                const themeIcon = document.getElementById('themeIcon');
+                const themeText = document.getElementById('themeText');
+                
+                if (theme === 'dark') {
+                    themeIcon.textContent = '☀️';
+                    themeText.textContent = 'Light';
+                } else {
+                    themeIcon.textContent = '🌙';
+                    themeText.textContent = 'Dark';
+                }
+                
+                // Save theme preference
+                localStorage.setItem('csv-nlq-theme', theme);
+            }
+
+            /**
+             * Set up collapsible section functionality
+             */
+            initializeCollapsibleSections() {
+                const sectionHeaders = document.querySelectorAll('.section-header');
+                sectionHeaders.forEach(header => {
+                    header.addEventListener('click', () => {
+                        const sectionId = header.getAttribute('data-section');
+                        this.toggleSection(sectionId);
+                    });
+                });
+
+                // Restore previously collapsed sections from localStorage
+                const collapsedSections = JSON.parse(localStorage.getItem('csv-nlq-collapsed') || '[]');
+                collapsedSections.forEach(sectionId => {
+                    this.collapseSection(sectionId, false);
+                });
+            }
+
+            /**
+             * Toggle the expanded/collapsed state of a section
+             * @param {string} sectionId - The ID of the section to toggle
+             */
+            toggleSection(sectionId) {
+                const content = document.getElementById(`${sectionId}-content`);
+                const toggle = document.querySelector(`[data-section="${sectionId}"] .section-toggle`);
+                
+                if (content.classList.contains('collapsed')) {
+                    this.expandSection(sectionId);
+                } else {
+                    this.collapseSection(sectionId);
+                }
+            }
+
+            /**
+             * Collapse a specific section
+             * @param {string} sectionId - The ID of the section to collapse
+             * @param {boolean} save - Whether to save the state to localStorage
+             */
+            collapseSection(sectionId, save = true) {
+                const content = document.getElementById(`${sectionId}-content`);
+                const toggle = document.querySelector(`[data-section="${sectionId}"] .section-toggle`);
+                
+                content.classList.add('collapsed');
+                toggle.classList.add('collapsed');
+                
+                if (save) this.saveCollapsedState();
+            }
+
+            /**
+             * Expand a specific section
+             * @param {string} sectionId - The ID of the section to expand
+             * @param {boolean} save - Whether to save the state to localStorage
+             */
+            expandSection(sectionId, save = true) {
+                const content = document.getElementById(`${sectionId}-content`);
+                const toggle = document.querySelector(`[data-section="${sectionId}"] .section-toggle`);
+                
+                content.classList.remove('collapsed');
+                toggle.classList.remove('collapsed');
+                
+                if (save) this.saveCollapsedState();
+            }
+
+            /**
+             * Save the current collapsed state of all sections to localStorage
+             */
+            saveCollapsedState() {
+                const collapsedSections = [];
+                document.querySelectorAll('.section-content.collapsed').forEach(content => {
+                    const sectionId = content.id.replace('-content', '');
+                    collapsedSections.push(sectionId);
+                });
+                localStorage.setItem('csv-nlq-collapsed', JSON.stringify(collapsedSections));
+            }
+
+            /**
+             * Save current API and model settings to localStorage
+             */
+            saveSettings() {
+                const settings = {
+                    apiUrl: document.getElementById('apiUrl').value,
+                    apiKey: document.getElementById('apiKey').value,
+                    model: document.getElementById('model').value,
+                    customModel: document.getElementById('customModel').value
+                };
+                localStorage.setItem('csv-nlq-settings', JSON.stringify(settings));
+            }
+
+            /**
+             * Load previously saved settings from localStorage
+             */
+            loadSettings() {
+                const savedSettings = localStorage.getItem('csv-nlq-settings');
+                if (savedSettings) {
+                    const settings = JSON.parse(savedSettings);
+                    document.getElementById('apiUrl').value = settings.apiUrl || 'https://api.openai.com/v1/chat/completions';
+                    document.getElementById('apiKey').value = settings.apiKey || '';
+                    document.getElementById('model').value = settings.model || 'gpt-3.5-turbo';
+                    document.getElementById('customModel').value = settings.customModel || '';
+                    
+                    // Show custom model field if needed
+                    const customModelGroup = document.getElementById('customModelGroup');
+                    customModelGroup.style.display = settings.model === 'custom' ? 'block' : 'none';
+                }
+            }
+
+            /**
+             * Handle drag over events for file upload
+             * @param {DragEvent} e - The drag event
+             */
+            handleDragOver(e) {
+                e.preventDefault();
+                document.getElementById('fileUpload').classList.add('dragover');
+            }
+
+            /**
+             * Handle file drop events
+             * @param {DragEvent} e - The drop event
+             */
+            handleDrop(e) {
+                e.preventDefault();
+                document.getElementById('fileUpload').classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    this.processFile(files[0]);
+                }
+            }
+
+            /**
+             * Handle file selection through file input
+             * @param {Event} e - The change event
+             */
+            handleFileSelect(e) {
+                if (e.target.files.length > 0) {
+                    this.processFile(e.target.files[0]);
+                }
+            }
+
+            /**
+             * Process the uploaded CSV file
+             * @param {File} file - The uploaded file
+             */
+            processFile(file) {
+                // Validate file type
+                if (!file.name.toLowerCase().endsWith('.csv')) {
+                    this.showStatus('Please select a CSV file.', 'error');
+                    return;
+                }
+
+                this.showStatus('Processing CSV file...', 'info');
+
+                // Parse CSV using PapaParse library
+                Papa.parse(file, {
+                    header: true,           // Use first row as headers
+                    dynamicTyping: true,    // Automatically convert data types
+                    skipEmptyLines: true,   // Skip empty rows
+                    complete: (results) => {
+                        // Handle parsing errors
+                        if (results.errors.length > 0) {
+                            this.showStatus('Error parsing CSV: ' + results.errors[0].message, 'error');
+                            return;
+                        }
+
+                        // Store parsed data and generate schema
+                        this.csvData = results.data;
+                        this.schema = this.generateSchema(results.data);
+                        this.displaySchema();
+                        this.showQuerySection();
+                        this.showStatus(`✅ Successfully loaded ${results.data.length} rows from ${file.name}`, 'success');
+                        
+                        // Auto-expand relevant sections for better UX
+                        this.expandSection('schema');
+                        this.expandSection('query');
+                    },
+                    error: (error) => {
+                        this.showStatus('Error reading file: ' + error.message, 'error');
+                    }
+                });
+            }
+
+            /**
+             * Generate schema information from CSV data
+             * @param {Array} data - The parsed CSV data
+             * @returns {Object} Schema object with column information
+             */
+            generateSchema(data) {
+                if (!data || data.length === 0) return {};
+
+                const schema = {};
+                // Sample first 100 rows for performance
+                const sample = data.slice(0, 100);
+
+                Object.keys(data[0]).forEach(column => {
+                    // Get non-empty values for type detection
+                    const values = sample.map(row => row[column]).filter(val => val !== null && val !== undefined && val !== '');
+                    
+                    // Determine column data type
+                    let type = 'TEXT';
+                    if (values.length > 0) {
+                        const firstValue = values[0];
+                        if (typeof firstValue === 'number') {
+                            type = Number.isInteger(firstValue) ? 'INTEGER' : 'REAL';
+                        } else if (typeof firstValue === 'boolean') {
+                            type = 'BOOLEAN';
+                        } else if (this.isDate(firstValue)) {
+                            type = 'DATE';
+                        }
+                    }
+
+                    schema[column] = {
+                        type: type,
+                        nullable: sample.some(row => row[column] === null || row[column] === undefined || row[column] === ''),
+                        uniqueValues: values.length > 0 ? Math.min(10, [...new Set(values)].length) : 0
+                    };
+                });
+
+                return schema;
+            }
+
+            /**
+             * Check if a string value represents a date
+             * @param {*} value - The value to check
+             * @returns {boolean} True if the value is a valid date string
+             */
+            isDate(value) {
+                if (typeof value !== 'string') return false;
+                const date = new Date(value);
+                return !isNaN(date.getTime()) && value.match(/\d{4}-\d{2}-\d{2}|\d{2}\/\d{2}\/\d{4}|\d{2}-\d{2}-\d{4}/);
+            }
+
+            /**
+             * Display the data schema in the UI
+             */
+            displaySchema() {
+                const schemaDisplay = document.getElementById('schemaDisplay');
+                const columns = Object.keys(this.schema);
+                
+                schemaDisplay.innerHTML = `
+                    <h4>📊 Data Schema (${columns.length} columns, ${this.csvData.length} rows):</h4>
+                    <ul>
+                        ${columns.map(col => 
+                            `<li><strong>${col}</strong>: ${this.schema[col].type}${this.schema[col].nullable ? ' (nullable)' : ''}</li>`
+                        ).join('')}
+                    </ul>
+                `;
+                
+                // Show the schema section
+                const schemaSection = document.getElementById('schemaSection');
+                schemaSection.style.display = 'block';
+            }
+
+            /**
+             * Show the query section after successful file upload
+             */
+            showQuerySection() {
+                const querySection = document.getElementById('querySection');
+                querySection.style.display = 'block';
+            }
+
+            /**
+             * Handle natural language query submission
+             */
+            async handleQuery() {
+                const query = document.getElementById('queryInput').value.trim();
+                if (!query) {
+                    this.showStatus('Please enter a question.', 'error');
+                    return;
+                }
+
+                const apiKey = document.getElementById('apiKey').value.trim();
+                if (!apiKey) {
+                    this.showStatus('Please enter your API key.', 'error');
+                    return;
+                }
+
+                this.showStatus('🤖 AI is generating SQL query...', 'info');
+                this.setQueryButtonState(false);
+
+                try {
+                    // Generate SQL from natural language using AI
+                    const sql = await this.generateSQL(query, apiKey);
+                    if (sql) {
+                        this.showSQL(sql);
+                        // Execute the generated SQL query
+                        const results = this.executeQuery(sql);
+                        this.displayResults(results);
+                        this.showStatus('✅ Query executed successfully!', 'success');
+                    }
+                } catch (error) {
+                    this.showStatus('❌ Error: ' + error.message, 'error');
+                } finally {
+                    this.setQueryButtonState(true);
+                }
+            }
+
+            /**
+             * Generate SQL query from natural language using AI API
+             * @param {string} query - The natural language query
+             * @param {string} apiKey - The API key for authentication
+             * @returns {Promise<string>} The generated SQL query
+             */
+            async generateSQL(query, apiKey) {
+                const apiUrl = document.getElementById('apiUrl').value;
+                const modelSelect = document.getElementById('model');
+                const model = modelSelect.value === 'custom' ? 
+                    document.getElementById('customModel').value : 
+                    modelSelect.value;
+
+                // Create schema description for the AI prompt
+                const schemaDescription = Object.keys(this.schema)
+                    .map(col => `${col} (${this.schema[col].type})`)
+                    .join(', ');
+
+                // Construct prompt for SQL generation
+                const prompt = `You are a SQL expert. Given the following CSV data schema, generate a SQL SELECT query to answer the user's question.
+
+Schema: ${schemaDescription}
+
+User Question: "${query}"
+
+Important instructions:
+1. Return ONLY the SQL query, no explanations
+2. Use standard SQL syntax
+3. The table name is "data"
+4. Column names are case-sensitive
+5. Use appropriate WHERE, GROUP BY, ORDER BY, and LIMIT clauses as needed
+6. For aggregations, always include appropriate GROUP BY clauses
+7. If asking for "top N" results, use ORDER BY with LIMIT
+
+Example: SELECT column1, COUNT(*) FROM data WHERE condition GROUP BY column1 ORDER BY COUNT(*) DESC LIMIT 5
+
+SQL Query:`;
+
+                // Make API request to generate SQL
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [
+                            {
+                                role: 'user',
+                                content: prompt
+                            }
+                        ],
+                        max_tokens: 5000,
+                        temperature: 0.1  // Low temperature for consistent SQL generation
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API Error: ${errorData.error?.message || response.statusText}`);
+                }
+
+                const data = await response.json();
+                const sql = data.choices[0].message.content.trim();
+                
+                // Clean up the SQL (remove markdown formatting if present)
+                return sql.replace(/```sql\n?|\n?```/g, '').trim();
+            }
+
+            /**
+             * Execute the generated SQL query on the CSV data
+             * @param {string} sql - The SQL query to execute
+             * @returns {Array} Query results
+             */
+            executeQuery(sql) {
+                try {
+                    // Use simplified SQL executor for CSV data
+                    return this.simpleQueryExecutor(sql);
+                } catch (error) {
+                    throw new Error(`SQL execution error: ${error.message}`);
+                }
+            }
+
+            /**
+             * Simple SQL query executor for basic operations on CSV data
+             * Handles SELECT, WHERE, GROUP BY, ORDER BY, and LIMIT clauses
+             * @param {string} sql - The SQL query to execute
+             * @returns {Array} Query results
+             */
+            simpleQueryExecutor(sql) {
+                const sqlUpper = sql.toUpperCase();
+                let data = [...this.csvData];
+
+                // Extract SELECT columns
+                const selectMatch = sql.match(/SELECT\s+(.+?)\s+FROM/i);
+                if (!selectMatch) throw new Error('Invalid SELECT statement');
+                
+                const selectPart = selectMatch[1].trim();
+                
+                // Handle WHERE clause filtering
+                const whereMatch = sql.match(/WHERE\s+(.+?)(?:\s+GROUP\s+BY|\s+ORDER\s+BY|\s+LIMIT|$)/i);
+                if (whereMatch) {
+                    const condition = whereMatch[1].trim();
+                    data = data.filter(row => this.evaluateCondition(row, condition));
+                }
+
+                // Handle GROUP BY aggregation
+                const groupByMatch = sql.match(/GROUP\s+BY\s+(.+?)(?:\s+ORDER\s+BY|\s+LIMIT|$)/i);
+                if (groupByMatch) {
+                    const groupColumns = groupByMatch[1].split(',').map(col => col.trim());
+                    data = this.groupBy(data, groupColumns, selectPart);
+                } else {
+                    // Handle SELECT without GROUP BY
+                    if (selectPart === '*') {
+                        // Keep all columns
+                    } else if (selectPart.includes('COUNT') || selectPart.includes('SUM') || selectPart.includes('AVG')) {
+                        // Handle aggregate functions without GROUP BY
+                        data = [this.calculateAggregates(data, selectPart)];
+                    } else {
+                        // Select specific columns
+                        const columns = selectPart.split(',').map(col => col.trim());
+                        data = data.map(row => {
+                            const newRow = {};
+                            columns.forEach(col => {
+                                if (row.hasOwnProperty(col)) {
+                                    newRow[col] = row[col];
+                                }
+                            });
+                            return newRow;
+                        });
+                    }
+                }
+
+                // Handle ORDER BY sorting
+                const orderByMatch = sql.match(/ORDER\s+BY\s+(.+?)(?:\s+LIMIT|$)/i);
+                if (orderByMatch) {
+                    const orderPart = orderByMatch[1].trim();
+                    const isDesc = orderPart.toUpperCase().includes('DESC');
+                    const column = orderPart.replace(/\s+(ASC|DESC)/i, '').trim();
+                    
+                    data.sort((a, b) => {
+                        const aVal = a[column];
+                        const bVal = b[column];
+                        
+                        if (typeof aVal === 'number' && typeof bVal === 'number') {
+                            return isDesc ? bVal - aVal : aVal - bVal;
+                        } else {
+                            const result = String(aVal).localeCompare(String(bVal));
+                            return isDesc ? -result : result;
+                        }
+                    });
+                }
+
+                // Handle LIMIT clause
+                const limitMatch = sql.match(/LIMIT\s+(\d+)/i);
+                if (limitMatch) {
+                    const limit = parseInt(limitMatch[1]);
+                    data = data.slice(0, limit);
+                }
+
+                return data;
+            }
+
+            /**
+             * Evaluate a WHERE condition against a data row
+             * @param {Object} row - The data row to evaluate
+             * @param {string} condition - The WHERE condition
+             * @returns {boolean} True if the condition matches
+             */
+            evaluateCondition(row, condition) {
+                try {
+                    // Handle various comparison operators and patterns
+                    const patterns = [
+                        { regex: /(\w+)\s*=\s*'([^']+)'/i, operator: '=' },
+                        { regex: /(\w+)\s*=\s*"([^"]+)"/i, operator: '=' },
+                        { regex: /(\w+)\s*=\s*(\d+(?:\.\d+)?)/i, operator: '=' },
+                        { regex: /(\w+)\s*!=\s*'([^']+)'/i, operator: '!=' },
+                        { regex: /(\w+)\s*!=\s*"([^"]+)"/i, operator: '!=' },
+                        { regex: /(\w+)\s*!=\s*(\d+(?:\.\d+)?)/i, operator: '!=' },
+                        { regex: /(\w+)\s*>\s*(\d+(?:\.\d+)?)/i, operator: '>' },
+                        { regex: /(\w+)\s*<\s*(\d+(?:\.\d+)?)/i, operator: '<' },
+                        { regex: /(\w+)\s*>=\s*(\d+(?:\.\d+)?)/i, operator: '>=' },
+                        { regex: /(\w+)\s*<=\s*(\d+(?:\.\d+)?)/i, operator: '<=' },
+                        { regex: /(\w+)\s*LIKE\s*'([^']+)'/i, operator: 'LIKE' },
+                        { regex: /(\w+)\s*LIKE\s*"([^"]+)"/i, operator: 'LIKE' }
+                    ];
+
+                    for (const pattern of patterns) {
+                        const match = condition.match(pattern.regex);
+                        if (match) {
+                            const column = match[1];
+                            const value = match[2];
+                            const rowValue = row[column];
+
+                            switch (pattern.operator) {
+                                case '=':
+                                    if (typeof rowValue === 'number' && !isNaN(Number(value))) {
+                                        return Number(rowValue) === Number(value);
+                                    }
+                                    return String(rowValue).toLowerCase() === String(value).toLowerCase();
+                                case '!=':
+                                    if (typeof rowValue === 'number' && !isNaN(Number(value))) {
+                                        return Number(rowValue) !== Number(value);
+                                    }
+                                    return String(rowValue).toLowerCase() !== String(value).toLowerCase();
+                                case '>':
+                                    return Number(rowValue) > Number(value);
+                                case '<':
+                                    return Number(rowValue) < Number(value);
+                                case '>=':
+                                    return Number(rowValue) >= Number(value);
+                                case '<=':
+                                    return Number(rowValue) <= Number(value);
+                                case 'LIKE':
+                                    // Convert SQL LIKE pattern to regex
+                                    const pattern = value.replace(/%/g, '.*').replace(/_/g, '.');
+                                    return new RegExp(pattern, 'i').test(String(rowValue));
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Condition evaluation error:', error.message);
+                }
+
+                return true; // Default to true if condition can't be parsed
+            }
+
+            /**
+             * Group data by specified columns and calculate aggregates
+             * @param {Array} data - The data to group
+             * @param {Array} groupColumns - Columns to group by
+             * @param {string} selectPart - The SELECT part of the query
+             * @returns {Array} Grouped data with aggregates
+             */
+            groupBy(data, groupColumns, selectPart) {
+                const groups = {};
+                
+                // Group rows by the specified columns
+                data.forEach(row => {
+                    const key = groupColumns.map(col => row[col]).join('|');
+                    if (!groups[key]) {
+                        groups[key] = [];
+                    }
+                    groups[key].push(row);
+                });
+
+                // Create result rows with group columns and aggregates
+                return Object.keys(groups).map(key => {
+                    const group = groups[key];
+                    const result = {};
+                    
+                    // Add group columns to result
+                    groupColumns.forEach((col, index) => {
+                        result[col] = key.split('|')[index];
+                    });
+                    
+                    // Calculate and add aggregates
+                    this.addAggregates(result, group, selectPart);
+                    
+                    return result;
+                });
+            }
+
+            /**
+             * Calculate aggregates for a dataset without grouping
+             * @param {Array} data - The data to aggregate
+             * @param {string} selectPart - The SELECT part containing aggregates
+             * @returns {Object} Single row with aggregate results
+             */
+            calculateAggregates(data, selectPart) {
+                const result = {};
+                this.addAggregates(result, data, selectPart);
+                return result;
+            }
+
+            /**
+             * Add aggregate calculations to a result object
+             * @param {Object} result - The result object to add aggregates to
+             * @param {Array} data - The data to calculate aggregates from
+             * @param {string} selectPart - The SELECT part containing aggregate functions
+             */
+            addAggregates(result, data, selectPart) {
+                // Find aggregate functions in the SELECT clause
+                const aggregates = selectPart.match(/(COUNT|SUM|AVG)\s*\(\s*([^)]+)\s*\)/gi);
+                if (aggregates) {
+                    aggregates.forEach(agg => {
+                        const match = agg.match(/(COUNT|SUM|AVG)\s*\(\s*([^)]+)\s*\)/i);
+                        const func = match[1].toUpperCase();
+                        const column = match[2].trim();
+                        
+                        // Use column alias if specified
+                        let key = agg;
+                        if (selectPart.includes(' AS ')) {
+                            const asMatch = selectPart.match(new RegExp(`${agg}\\s+AS\\s+(\\w+)`, 'i'));
+                            if (asMatch) key = asMatch[1];
+                        }
+                        
+                        // Calculate the appropriate aggregate
+                        switch (func) {
+                            case 'COUNT':
+                                result[key] = data.length;
+                                break;
+                            case 'SUM':
+                                result[key] = data.reduce((sum, row) => sum + (Number(row[column]) || 0), 0);
+                                break;
+                            case 'AVG':
+                                const values = data.map(row => Number(row[column])).filter(val => !isNaN(val));
+                                result[key] = values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0;
+                                break;
+                        }
+                    });
+                }
+            }
+
+            /**
+             * Display the generated SQL query in the UI
+             * @param {string} sql - The SQL query to display
+             */
+            showSQL(sql) {
+                const results = document.getElementById('results');
+                const sqlDisplay = document.createElement('div');
+                sqlDisplay.innerHTML = `
+                    <h4>🔍 Generated SQL Query:</h4>
+                    <div class="sql-display">${sql}</div>
+                `;
+                results.innerHTML = '';
+                results.appendChild(sqlDisplay);
+            }
+
+            /**
+             * Display query results in a table format
+             * @param {Array} data - The query results to display
+             */
+            displayResults(data) {
+                if (!data || data.length === 0) {
+                    const results = document.getElementById('results');
+                    results.innerHTML += '<p>No results found.</p>';
+                    return;
+                }
+
+                const columns = Object.keys(data[0]);
+                const table = `
+                    <h4>📊 Query Results (${data.length} rows):</h4>
+                    <div class="data-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    ${columns.map(col => `<th>${col}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.slice(0, 100).map(row => `
+                                    <tr>
+                                        ${columns.map(col => `<td>${row[col] !== null && row[col] !== undefined ? row[col] : ''}</td>`).join('')}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    ${data.length > 100 ? `<p><em>Showing first 100 rows of ${data.length} total results.</em></p>` : ''}
+                `;
+
+                const results = document.getElementById('results');
+                results.innerHTML += table;
+            }
+
+            /**
+             * Display status messages to the user
+             * @param {string} message - The message to display
+             * @param {string} type - The type of message ('success', 'error', 'info')
+             */
+            showStatus(message, type) {
+                const status = document.getElementById('status');
+                status.innerHTML = `<div class="status ${type}">${message}</div>`;
+                
+                // Auto-hide success and error messages after 5 seconds
+                if (type === 'success' || type === 'error') {
+                    setTimeout(() => {
+                        if (status.innerHTML.includes(message)) {
+                            status.innerHTML = '';
+                        }
+                    }, 5000);
+                }
+            }
+
+            /**
+             * Enable or disable the query button and update its text
+             * @param {boolean} enabled - Whether the button should be enabled
+             */
+            setQueryButtonState(enabled) {
+                const button = document.getElementById('queryButton');
+                button.disabled = !enabled;
+                button.textContent = enabled ? 'Query' : 'Processing...';
+            }
+        }
+
+        /**
+         * Initialize the application when the DOM is ready
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            new CSVQueryTool();
+        });
+    </script>
+</body>
+</html>

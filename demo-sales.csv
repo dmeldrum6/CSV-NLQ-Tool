@@ -1,0 +1,50 @@
+sale_date,client,product,quantity,unit_price,total_amount,salesperson,region
+2024-01-15,Acme Corp,Widget A,100,25.50,2550.00,Sarah Johnson,North
+2024-01-20,Tech Solutions Inc,Widget B,75,42.00,3150.00,Mike Chen,West
+2024-01-25,Global Industries,Widget C,200,15.75,3150.00,Emily Davis,South
+2024-02-05,Acme Corp,Widget A,150,25.50,3825.00,Sarah Johnson,North
+2024-02-10,StartUp LLC,Widget B,50,42.00,2100.00,Tom Wilson,East
+2024-02-18,Manufacturing Co,Widget A,300,25.50,7650.00,Emily Davis,South
+2024-02-22,Tech Solutions Inc,Widget C,120,15.75,1890.00,Mike Chen,West
+2024-03-03,Global Industries,Widget B,80,42.00,3360.00,Sarah Johnson,North
+2024-03-12,Retail Chain,Widget A,250,25.50,6375.00,Tom Wilson,East
+2024-03-20,Acme Corp,Widget C,400,15.75,6300.00,Emily Davis,South
+2024-03-28,StartUp LLC,Widget B,90,42.00,3780.00,Mike Chen,West
+2024-04-08,Manufacturing Co,Widget A,175,25.50,4462.50,Sarah Johnson,North
+2024-04-15,Tech Solutions Inc,Widget C,300,15.75,4725.00,Tom Wilson,East
+2024-04-22,Global Industries,Widget B,110,42.00,4620.00,Emily Davis,South
+2024-04-30,Retail Chain,Widget A,220,25.50,5610.00,Mike Chen,West
+2024-05-07,Acme Corp,Widget B,95,42.00,3990.00,Sarah Johnson,North
+2024-05-14,StartUp LLC,Widget C,180,15.75,2835.00,Tom Wilson,East
+2024-05-21,Manufacturing Co,Widget A,280,25.50,7140.00,Emily Davis,South
+2024-05-29,Tech Solutions Inc,Widget B,125,42.00,5250.00,Mike Chen,West
+2024-06-05,Global Industries,Widget C,350,15.75,5512.50,Sarah Johnson,North
+2024-06-12,Retail Chain,Widget A,190,25.50,4845.00,Tom Wilson,East
+2024-06-18,Acme Corp,Widget B,105,42.00,4410.00,Emily Davis,South
+2024-06-25,StartUp LLC,Widget C,275,15.75,4331.25,Mike Chen,West
+2024-07-02,Manufacturing Co,Widget A,320,25.50,8160.00,Sarah Johnson,North
+2024-07-09,Tech Solutions Inc,Widget B,140,42.00,5880.00,Tom Wilson,East
+2024-07-16,Global Industries,Widget C,225,15.75,3543.75,Emily Davis,South
+2024-07-23,Retail Chain,Widget A,160,25.50,4080.00,Mike Chen,West
+2024-07-30,Acme Corp,Widget B,85,42.00,3570.00,Sarah Johnson,North
+2024-08-06,StartUp LLC,Widget C,310,15.75,4881.25,Tom Wilson,East
+2024-08-13,Manufacturing Co,Widget A,240,25.50,6120.00,Emily Davis,South
+2024-08-20,Tech Solutions Inc,Widget B,115,42.00,4830.00,Mike Chen,West
+2024-08-27,Global Industries,Widget C,195,15.75,3071.25,Sarah Johnson,North
+2024-09-03,Retail Chain,Widget A,210,25.50,5355.00,Tom Wilson,East
+2024-09-10,Acme Corp,Widget B,130,42.00,5460.00,Emily Davis,South
+2024-09-17,StartUp LLC,Widget C,285,15.75,4488.75,Mike Chen,West
+2024-09-24,Manufacturing Co,Widget A,155,25.50,3952.50,Sarah Johnson,North
+2024-10-01,Tech Solutions Inc,Widget B,170,42.00,7140.00,Tom Wilson,East
+2024-10-08,Global Industries,Widget C,260,15.75,4095.00,Emily Davis,South
+2024-10-15,Retail Chain,Widget A,185,25.50,4717.50,Mike Chen,West
+2024-10-22,Acme Corp,Widget B,120,42.00,5040.00,Sarah Johnson,North
+2024-10-29,StartUp LLC,Widget C,340,15.75,5355.00,Tom Wilson,East
+2024-11-05,Manufacturing Co,Widget A,290,25.50,7395.00,Emily Davis,South
+2024-11-12,Tech Solutions Inc,Widget B,145,42.00,6090.00,Mike Chen,West
+2024-11-19,Global Industries,Widget C,215,15.75,3386.25,Sarah Johnson,North
+2024-11-26,Retail Chain,Widget A,175,25.50,4462.50,Tom Wilson,East
+2024-12-03,Acme Corp,Widget B,110,42.00,4620.00,Emily Davis,South
+2024-12-10,StartUp LLC,Widget C,295,15.75,4646.25,Mike Chen,West
+2024-12-17,Manufacturing Co,Widget A,205,25.50,5227.50,Sarah Johnson,North
+2024-12-24,Tech Solutions Inc,Widget B,135,42.00,5670.00,Tom Wilson,East
